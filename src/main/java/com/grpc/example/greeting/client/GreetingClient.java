@@ -15,10 +15,12 @@ public class GreetingClient {
         doUnaryCall(channel);
         doServerStreamingCall(channel);
         doClientStreamingCall(channel);
+        doBiDiStreamingCall(channel);
         channel.shutdown();
     }
 
     private void doUnaryCall(ManagedChannel channel) {
+        System.out.println("================ Starting Unary Call =======================");
         GreetServiceGrpc.GreetServiceBlockingStub greetService = GreetServiceGrpc.newBlockingStub(channel);
 
         Greeting greeting = Greeting.newBuilder().setFirstName("Harshad").setLastName("Ranganathan").build();
@@ -29,6 +31,7 @@ public class GreetingClient {
     }
 
     private void doServerStreamingCall(ManagedChannel channel) {
+        System.out.println("================ Starting Server Streaming =======================");
         GreetServiceGrpc.GreetServiceBlockingStub greetService = GreetServiceGrpc.newBlockingStub(channel);
 
         Greeting greeting = Greeting.newBuilder().setFirstName("Harshad").setLastName("Ranganathan").build();
@@ -40,6 +43,7 @@ public class GreetingClient {
     }
 
     private void doClientStreamingCall(ManagedChannel channel) {
+        System.out.println("================ Starting Client Streaming =======================");
         GreetServiceGrpc.GreetServiceStub greetService = GreetServiceGrpc.newStub(channel);
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -64,6 +68,41 @@ public class GreetingClient {
         requestStreamObserver.onNext(LongGreetRequest.newBuilder().setGreeting(Greeting.newBuilder().setFirstName("Harshad").build()).build());
         requestStreamObserver.onNext(LongGreetRequest.newBuilder().setGreeting(Greeting.newBuilder().setFirstName("Adam").build()).build());
         requestStreamObserver.onNext(LongGreetRequest.newBuilder().setGreeting(Greeting.newBuilder().setFirstName("Pinto").build()).build());
+        requestStreamObserver.onCompleted();
+
+        try {
+            countDownLatch.await(3L, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void doBiDiStreamingCall(ManagedChannel channel) {
+        System.out.println("================ Starting Bi-Directional Streaming =======================");
+        GreetServiceGrpc.GreetServiceStub greetService = GreetServiceGrpc.newStub(channel);
+
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        StreamObserver<GreetEveryoneRequest> requestStreamObserver = greetService.greetEveryone(new StreamObserver<GreetEveryoneResponse>() {
+            @Override
+            public void onNext(GreetEveryoneResponse value) {
+                System.out.println(value.getResult());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+                countDownLatch.countDown();
+            }
+        });
+
+        requestStreamObserver.onNext(GreetEveryoneRequest.newBuilder().setGreeting(Greeting.newBuilder().setFirstName("Harshad").build()).build());
+        requestStreamObserver.onNext(GreetEveryoneRequest.newBuilder().setGreeting(Greeting.newBuilder().setFirstName("Adam").build()).build());
+        requestStreamObserver.onNext(GreetEveryoneRequest.newBuilder().setGreeting(Greeting.newBuilder().setFirstName("Pinto").build()).build());
         requestStreamObserver.onCompleted();
 
         try {
