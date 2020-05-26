@@ -1,10 +1,9 @@
 package com.grpc.example.calculator.client;
 
-import com.proto.calculator.CalculatorServiceGrpc;
-import com.proto.calculator.SumRequest;
-import com.proto.calculator.SumResponse;
+import com.proto.calculator.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 
 public class CalculatorClient {
     public static void main(String[] args) {
@@ -15,6 +14,13 @@ public class CalculatorClient {
         SumRequest sumRequest = SumRequest.newBuilder().setFirstNumber(1).setSecondNumber(5).build();
         SumResponse sumResponse = calculatorService.sum(sumRequest);
         System.out.println(sumResponse);
+
+        SquareRootRequest squareRootRequest = SquareRootRequest.newBuilder().setNumber(-1).build();
+        try {
+            SquareRootResponse squareRootResponse = calculatorService.squareRoot(squareRootRequest);
+        } catch (StatusRuntimeException statusRuntimeException) {
+            statusRuntimeException.printStackTrace();
+        }
 
         managedChannel.shutdown();
     }
